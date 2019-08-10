@@ -1,15 +1,20 @@
-module github.com/jetstack/cert-manager-webhook-example
+module github.com/NetWatcher/cert-manager-webhook-godaddy
 
 go 1.12
 
 require (
+	github.com/apache/thrift v0.12.0 // indirect
+	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/jetstack/cert-manager v0.8.0-alpha.0
-	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	k8s.io/apiextensions-apiserver v0.0.0-20190413053546-d0acb7a76918
-	k8s.io/client-go v11.0.0+incompatible
+	github.com/jetstack/cert-manager v0.9.0
+	github.com/openzipkin/zipkin-go v0.1.6 // indirect
+	github.com/philhofer/fwd v1.0.0 // indirect
+	github.com/pquerna/ffjson v0.0.0-20180717144149-af8b230fcd20 // indirect
+	github.com/tinylib/msgp v1.1.0 // indirect
+	github.com/ugorji/go v0.0.0-20171019201919-bdcc60b419d1 // indirect
+	k8s.io/apiextensions-apiserver v0.0.0-20190718185103-d1ef975d28ce
+	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 )
 
 replace k8s.io/client-go => k8s.io/client-go v0.0.0-20190413052642-108c485f896e
