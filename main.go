@@ -109,9 +109,12 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 
 	fmt.Printf("Decoded configuration %v", cfg)
 
-	baseURL := "https://api.godaddy.com"
+	// https://developer.godaddy.com/doc/endpoint/domains
+	// OTE environment: https://api.ote-godaddy.com
+	// PRODUCTION environment: https://api.godaddy.com
+	baseURL := "https://api.ote-godaddy.com"
 	if cfg.Production {
-		baseURL = "https://api.ote-godaddy.com/"
+		baseURL := "https://api.godaddy.com"
 	}
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
@@ -147,9 +150,12 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 
 	fmt.Printf("Decoded configuration %v", cfg)
 
-	baseURL := "https://api.godaddy.com"
+	// https://developer.godaddy.com/doc/endpoint/domains
+	// OTE environment: https://api.ote-godaddy.com
+	// PRODUCTION environment: https://api.godaddy.com
+	baseURL := "https://api.ote-godaddy.com"
 	if cfg.Production {
-		baseURL = "https://api.ote-godaddy.com/"
+		baseURL := "https://api.godaddy.com"
 	}
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
