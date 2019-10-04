@@ -31,6 +31,7 @@ type DNSRecord struct {
 	TTL      int    `json:"ttl,omitempty"`
 }
 
+// GroupName a API group name
 var GroupName = os.Getenv("GROUP_NAME")
 
 func main() {
@@ -114,7 +115,7 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 	// PRODUCTION environment: https://api.godaddy.com
 	baseURL := "https://api.ote-godaddy.com"
 	if cfg.Production {
-		baseURL := "https://api.godaddy.com"
+		baseURL = "https://api.godaddy.com"
 	}
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
@@ -155,7 +156,7 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 	// PRODUCTION environment: https://api.godaddy.com
 	baseURL := "https://api.ote-godaddy.com"
 	if cfg.Production {
-		baseURL := "https://api.godaddy.com"
+		baseURL = "https://api.godaddy.com"
 	}
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)

@@ -4,51 +4,12 @@
 ## Installation
 
 ```bash
-$ helm install --name cert-manager-webhook-godaddy ./deploy/godaddy-webhook
+$ helm install --name godaddy-webhook --namespace cert-manager ./deploy/godaddy-webhook
 ```
 
 ## Issuer
 
-secret
-
-```bash
-$ kubectl -n cert-manager create secret generic godaddy-credentials --from-literal=authAPISecret='your GoDaddy authAPISecret'
-```
-
-RBAC
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  name: cert-manager-webhook-godaddy:secret-reader
-rules:
-  - apiGroups:
-      - ''
-    resources:
-      - 'secrets'
-    resourceNames:
-      - 'godaddy-credentials'
-    verbs:
-      - 'get'
-      - 'watch'
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
-metadata:
-  name: cert-manager-webhook-godaddy:secret-reader
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cert-manager-webhook-godaddy:secret-reader
-subjects:
-  - apiGroup: ""
-    kind: ServiceAccount
-    name: cert-manager-webhook-godaddy
-    namespace: default
-```
-
-ClusterIssuer
+### ClusterIssuer
 
 ```yaml
 apiVersion: certmanager.k8s.io/v1alpha1
@@ -62,18 +23,17 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
-    - selector: 
+    - selector:
         dnsNames:
         - '*.example.com'
       dns01:
         webhook:
           config:
-            accessKeyId: <your GoDaddy authAPIKey>
-            accessKeySecretRef:
-              key: accessKeySecret
-              name: godaddy-credentials
+            authApiKey: <your GoDaddy authAPIKey>
+            authApiSecret: <your GoDaddy authApiSecret>
+            production: true
             ttl: 600
-          groupName: acme.company.com
+          groupName: acme.mycompany.com
           solverName: godaddy
 ```
 
@@ -122,9 +82,6 @@ spec:
 ## Development
 
 ### Running the test suite
-
-
-
 All DNS providers **must** run the DNS01 provider conformance testing suite,
 else they will have undetermined behaviour when used with cert-manager.
 

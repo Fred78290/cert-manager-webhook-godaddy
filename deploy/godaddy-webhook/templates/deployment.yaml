@@ -1,25 +1,26 @@
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "example-webhook.fullname" . }}
+  name: {{ include "godaddy-webhook.fullname" . }}
   labels:
-    app: {{ include "example-webhook.name" . }}
-    chart: {{ include "example-webhook.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+{{ include "godaddy-webhook.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "example-webhook.name" . }}
-      release: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "godaddy-webhook.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ include "example-webhook.name" . }}
-        release: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ include "godaddy-webhook.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ include "example-webhook.fullname" . }}
+      serviceAccountName: {{ include "godaddy-webhook.fullname" . }}
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -49,20 +50,20 @@ spec:
               mountPath: /tls
               readOnly: true
           resources:
-{{ toYaml .Values.resources | indent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
       volumes:
         - name: certs
           secret:
-            secretName: {{ include "example-webhook.servingCertificate" . }}
-    {{- with .Values.nodeSelector }}
+            secretName: {{ include "godaddy-webhook.servingCertificate" . }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     {{- with .Values.affinity }}
       affinity:
-{{ toYaml . | indent 8 }}
+        {{- toYaml . | nindent 8 }}
     {{- end }}
     {{- with .Values.tolerations }}
       tolerations:
-{{ toYaml . | indent 8 }}
+        {{- toYaml . | nindent 8 }}
     {{- end }}
