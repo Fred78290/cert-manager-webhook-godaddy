@@ -20,7 +20,7 @@ func TestRunsSuite(t *testing.T) {
 		dns.SetResolvedZone(zone),
 		dns.SetAllowAmbientCredentials(false),
 		dns.SetManifestPath("testdata/godaddy"),
-		dns.SetBinariesPath("_out/kubebuilder/bin"),
+		dns.SetBinariesPath("__main__/hack/bin"),
 	)
 
 	fixture.RunConformance(t)

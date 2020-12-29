@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASEIMAGE=k8s.gcr.io/debian-base-amd64:v1.0.0
-FROM $BASEIMAGE
+FROM golang:latest
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
-ENV DEBIAN_FRONTEND noninteractive
-RUN clean-install ca-certificates tzdata; \
-    apt-get update;
+ENV GOPATH /gopath/
+ENV PATH $GOPATH/bin:$PATH
 
-ADD out/cert-manager-godaddy-linux-amd64 /usr/local/bin/cert-manager-godaddy
+RUN apt-get update && apt-get --yes install libseccomp-dev && \
+    go version
 
-ENTRYPOINT ["cert-manager-godaddy"]
+CMD ["/bin/bash"]

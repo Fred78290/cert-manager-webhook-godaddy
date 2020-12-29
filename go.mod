@@ -1,13 +1,18 @@
-module github.com/inspectorioinc/cert-manager-webhook-godaddy
+module github.com/Fred78290/cert-manager-webhook-godaddy
 
-go 1.13
+go 1.15
 
-require (
-	github.com/jetstack/cert-manager v0.12.0
-	k8s.io/apiextensions-apiserver v0.0.0-20191114105449-027877536833
-	k8s.io/apimachinery v0.0.0-20191028221656-72ed19daf4bb
-	k8s.io/client-go v0.0.0-20191114101535-6c5935290e33
-	k8s.io/component-base v0.0.0-20191114102325-35a9586014f7
+replace (
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.20.1
+	k8s.io/apimachinery => k8s.io/apimachinery v0.20.1
+	k8s.io/client-go => k8s.io/client-go v0.20.1
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.20.1
 )
 
-replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.4
+require (
+	github.com/jetstack/cert-manager v1.1.0
+	k8s.io/apiextensions-apiserver v0.20.1
+	k8s.io/apimachinery v0.20.1
+	k8s.io/client-go v0.20.1
+	k8s.io/klog/v2 v2.4.0
+)
