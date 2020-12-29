@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,7 +14,10 @@ import (
 	"time"
 
 	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	//"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
@@ -21,6 +26,24 @@ import (
 
 	pkgutil "github.com/jetstack/cert-manager/pkg/util"
 )
+
+var phVersion = "v0.0.0-unset"
+var phBuildDate = ""
+
+// Context wrapper
+type Context struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+// NewContext return a context. Timeout is in seconds
+func NewContext(timeout time.Duration) Context {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	return Context{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
 
 // DNSRecord a DNS record
 type DNSRecord struct {
@@ -35,18 +58,34 @@ type DNSRecord struct {
 var GroupName = os.Getenv("GROUP_NAME")
 
 func main() {
-	if GroupName == "" {
-		panic("GROUP_NAME must be specified")
-	}
 
-	// This will register our godaddy DNS provider with the webhook serving
-	// library, making it available as an API under the provided GroupName.
-	// You can register multiple DNS provider implementations with a single
-	// webhook, where the Name() method will be used to disambiguate between
-	// the different implementations.
-	cmd.RunWebhookServer(GroupName,
-		&godaddyDNSProviderSolver{},
-	)
+	versionPtr := flag.Bool("version", false, "Give the version")
+
+	// Declare it
+	flag.String("tls-cert-file", "/tls/tls.crt", "tls-cert-file")
+	flag.String("tls-private-key-file", "/tls/tls.key", "tls-private-key-file")
+
+	flag.Parse()
+
+	if *versionPtr {
+		klog.Infof("The current version is:%s, build at:%s", phVersion, phBuildDate)
+	} else {
+
+		if GroupName == "" {
+			panic("GROUP_NAME must be specified")
+		}
+
+		klog.Infof("Launch cert-manager-webhook-godaddy with group name: %s", GroupName)
+
+		// This will register our godaddy DNS provider with the webhook serving
+		// library, making it available as an API under the provided GroupName.
+		// You can register multiple DNS provider implementations with a single
+		// webhook, where the Name() method will be used to disambiguate between
+		// the different implementations.
+		cmd.RunWebhookServer(GroupName,
+			&godaddyDNSProviderSolver{},
+		)
+	}
 }
 
 // godaddyDNSProviderSolver implements the provider-specific logic needed to
@@ -60,7 +99,33 @@ type godaddyDNSProviderSolver struct {
 	// 3. uncomment the relevant code in the Initialize method below
 	// 4. ensure your webhook's service account has the required RBAC role
 	//    assigned to it for interacting with the Kubernetes APIs you need.
-	//client kubernetes.Clientset
+	client *kubernetes.Clientset
+}
+
+// LocalObjectReference A reference to an object in the same namespace as the referent.
+// If the referent is a cluster-scoped resource (e.g. a ClusterIssuer),
+// the reference instead refers to the resource with the given name in the
+// configured 'cluster resource namespace', which is set as a flag on the
+// controller component (and defaults to the namespace that cert-manager
+// runs in).
+type LocalObjectReference struct {
+	// Name of the resource being referred to.
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+	Name *string `json:"name,omitempty"`
+}
+
+// SecretKeySelector A reference to a specific 'key' within a Secret resource.
+// In some instances, `key` is a required field.
+type SecretKeySelector struct {
+	// The name of the Secret resource being referred to.
+	LocalObjectReference `json:",inline"`
+
+	// The key of the entry in the Secret resource's `data` field to be used.
+	// Some instances of this field may be defaulted, in others it may be
+	// required.
+	// +optional
+	Key    string `json:"key,omitempty"`
+	Secret string `json:"secret,omitempty"`
 }
 
 // godaddyDNSProviderConfig is a structure that is used to decode into when
@@ -81,10 +146,9 @@ type godaddyDNSProviderConfig struct {
 	// These fields will be set by users in the
 	// `issuer.spec.acme.dns01.providers.webhook.config` field.
 
-	AuthAPIKey    string `json:"authApiKey"`
-	AuthAPISecret string `json:"authApiSecret"`
-	Production    bool   `json:"production"`
-	TTL           int    `json:"ttl"`
+	APIKeySecretRef SecretKeySelector `json:"apiKeySecret"`
+	Production      bool              `json:"production"`
+	TTL             int               `json:"ttl"`
 }
 
 // Name is used as the name for this DNS solver when referencing it on the ACME
@@ -108,15 +172,7 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 		return err
 	}
 
-	fmt.Printf("Decoded configuration %v", cfg)
-
-	// https://developer.godaddy.com/doc/endpoint/domains
-	// OTE environment: https://api.ote-godaddy.com
-	// PRODUCTION environment: https://api.godaddy.com
-	baseURL := "https://api.ote-godaddy.com"
-	if cfg.Production {
-		baseURL = "https://api.godaddy.com"
-	}
+	klog.V(6).Infof("Decoded configuration %v", cfg)
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
 
@@ -134,7 +190,9 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 		},
 	}
 
-	return c.updateRecords(cfg, baseURL, rec, dnsZone, recordName)
+	klog.Infof("Present record: %s with key: %s", recordName, ch.Key)
+
+	return c.updateRecords(cfg, ch.ResourceNamespace, rec, dnsZone, recordName)
 }
 
 // CleanUp should delete the relevant TXT record from the DNS provider console.
@@ -149,20 +207,14 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 		return err
 	}
 
-	fmt.Printf("Decoded configuration %v", cfg)
-
-	// https://developer.godaddy.com/doc/endpoint/domains
-	// OTE environment: https://api.ote-godaddy.com
-	// PRODUCTION environment: https://api.godaddy.com
-	baseURL := "https://api.ote-godaddy.com"
-	if cfg.Production {
-		baseURL = "https://api.godaddy.com"
-	}
+	klog.V(5).Infof("Decoded configuration %v", cfg)
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
 
 	dnsZone, err := c.getZone(ch.ResolvedZone)
 	if err != nil {
+		klog.Errorf("Unable to get zone:%s, error: %v", ch.ResolvedZone, err)
+
 		return err
 	}
 
@@ -174,7 +226,9 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 		},
 	}
 
-	return c.updateRecords(cfg, baseURL, rec, dnsZone, recordName)
+	klog.Infof("Cleanup record: %s", recordName)
+
+	return c.updateRecords(cfg, ch.ResourceNamespace, rec, dnsZone, recordName)
 }
 
 // Initialize will be called when the webhook first starts.
@@ -187,17 +241,13 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 // The stopCh can be used to handle early termination of the webhook, in cases
 // where a SIGTERM or similar signal is sent to the webhook process.
 func (c *godaddyDNSProviderSolver) Initialize(kubeClientConfig *rest.Config, stopCh <-chan struct{}) error {
-	///// UNCOMMENT THE BELOW CODE TO MAKE A KUBERNETES CLIENTSET AVAILABLE TO
-	///// YOUR CUSTOM DNS PROVIDER
+	cl, err := kubernetes.NewForConfig(kubeClientConfig)
+	if err != nil {
+		return err
+	}
 
-	//cl, err := kubernetes.NewForConfig(kubeClientConfig)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//c.client = cl
+	c.client = cl
 
-	///// END OF CODE TO MAKE KUBERNETES CLIENTSET AVAILABLE
 	return nil
 }
 
@@ -207,25 +257,45 @@ func loadConfig(cfgJSON *extapi.JSON) (godaddyDNSProviderConfig, error) {
 	cfg := godaddyDNSProviderConfig{}
 	// handle the 'base case' where no configuration has been provided
 	if cfgJSON == nil {
+		klog.Errorln("Config is not defined")
+
 		return cfg, nil
 	}
+
 	if err := json.Unmarshal(cfgJSON.Raw, &cfg); err != nil {
+		klog.Errorf("Can't decode config: %v", err)
+
 		return cfg, fmt.Errorf("error decoding solver config: %v", err)
 	}
 
 	return cfg, nil
 }
 
-func (c *godaddyDNSProviderSolver) updateRecords(cfg godaddyDNSProviderConfig, baseURL string, records []DNSRecord, domainZone string, recordName string) error {
+func (c *godaddyDNSProviderSolver) updateRecords(cfg godaddyDNSProviderConfig, resourceNamespace string, records []DNSRecord, domainZone string, recordName string) error {
 	body, err := json.Marshal(records)
 	if err != nil {
 		return err
 	}
 
+	authAPIKey, authAPISecret, e := c.getAPIKey(cfg, resourceNamespace)
+	if e != nil {
+		return e
+	}
+
+	// https://developer.godaddy.com/doc/endpoint/domains
+	// OTE environment: https://api.ote-godaddy.com
+	// PRODUCTION environment: https://api.godaddy.com
+	baseURL := "https://api.ote-godaddy.com"
+	if cfg.Production {
+		baseURL = "https://api.godaddy.com"
+	}
+
 	var resp *http.Response
 	url := fmt.Sprintf("/v1/domains/%s/records/TXT/%s", domainZone, recordName)
-	resp, err = c.makeRequest(cfg, baseURL, http.MethodPut, url, bytes.NewReader(body))
+	resp, err = c.makeRequest(cfg, *authAPIKey, *authAPISecret, baseURL, http.MethodPut, url, bytes.NewReader(body))
 	if err != nil {
+		klog.Errorf("Unable to request: %s%s, got error:%s", baseURL, url, err)
+
 		return err
 	}
 
@@ -233,12 +303,17 @@ func (c *godaddyDNSProviderSolver) updateRecords(cfg godaddyDNSProviderConfig, b
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("could not create record %v; Status: %v; Body: %s", string(body), resp.StatusCode, string(bodyBytes))
+		errStr := fmt.Sprintf("could not create record %v; Status: %v; Body: %s", string(body), resp.StatusCode, string(bodyBytes))
+
+		klog.Errorln(errStr)
+
+		return fmt.Errorf(errStr)
 	}
+
 	return nil
 }
 
-func (c *godaddyDNSProviderSolver) makeRequest(cfg godaddyDNSProviderConfig, baseURL string, method string, uri string, body io.Reader) (*http.Response, error) {
+func (c *godaddyDNSProviderSolver) makeRequest(cfg godaddyDNSProviderConfig, authAPIKey string, authAPISecret string, baseURL string, method string, uri string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", baseURL, uri), body)
 	if err != nil {
 		return nil, err
@@ -247,7 +322,7 @@ func (c *godaddyDNSProviderSolver) makeRequest(cfg godaddyDNSProviderConfig, bas
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", pkgutil.CertManagerUserAgent)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", cfg.AuthAPIKey, cfg.AuthAPISecret))
+	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", authAPIKey, authAPISecret))
 
 	client := http.Client{
 		Timeout: 30 * time.Second,
@@ -260,6 +335,7 @@ func (c *godaddyDNSProviderSolver) extractRecordName(fqdn, domain string) string
 	if idx := strings.Index(fqdn, "."+domain); idx != -1 {
 		return fqdn[:idx]
 	}
+
 	return util.UnFqdn(fqdn)
 }
 
@@ -268,6 +344,7 @@ func (c *godaddyDNSProviderSolver) extractDomainName(zone string) string {
 	if err != nil {
 		return zone
 	}
+
 	return util.UnFqdn(authZone)
 }
 
@@ -278,4 +355,39 @@ func (c *godaddyDNSProviderSolver) getZone(fqdn string) (string, error) {
 	}
 
 	return util.UnFqdn(authZone), nil
+}
+
+func (c *godaddyDNSProviderSolver) getAPIKey(cfg godaddyDNSProviderConfig, namespace string) (*string, *string, error) {
+
+	ctx := NewContext(time.Minute * 2)
+	defer ctx.cancel()
+
+	if cfg.APIKeySecretRef.LocalObjectReference.Name != nil {
+		secretName := *cfg.APIKeySecretRef.LocalObjectReference.Name
+
+		klog.V(6).Infof("try to load secret `%s` in namespace:`%s`", secretName, namespace)
+
+		sec, err := c.client.CoreV1().Secrets(namespace).Get(ctx.ctx, secretName, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to get secret `%s`; %v", secretName, err)
+		}
+
+		keyBytes, ok := sec.Data[cfg.APIKeySecretRef.Key]
+		if !ok {
+			return nil, nil, fmt.Errorf("key %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Key, secretName, namespace)
+		}
+
+		secretBytes, ok := sec.Data[cfg.APIKeySecretRef.Secret]
+		if !ok {
+			return nil, nil, fmt.Errorf("secret %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Secret, secretName, namespace)
+		}
+
+		apiKey := string(keyBytes)
+		apiSecret := string(secretBytes)
+		return &apiKey, &apiSecret, nil
+	}
+
+	klog.V(6).Infof("GoDaddy use key pair %s:%s", cfg.APIKeySecretRef.Key, cfg.APIKeySecretRef.Secret)
+
+	return &cfg.APIKeySecretRef.Key, &cfg.APIKeySecretRef.Secret, nil
 }
