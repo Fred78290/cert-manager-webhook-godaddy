@@ -49,7 +49,7 @@ format:
     test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -s -w {} + | tee /dev/stderr)"
 
 docker-builder:
-	docker build -t cert-manager-godaddy-builder ./builder
+	test -z "$(docker image ls | grep cert-manager-godaddy-builder)" && docker build -t cert-manager-godaddy-builder ./builder
 
 build-in-docker: docker-builder
 	docker run --rm -v `pwd`:/gopath/src/github.com/Fred78290/cert-manager-webhook-godaddy/ cert-manager-godaddy-builder:latest bash \

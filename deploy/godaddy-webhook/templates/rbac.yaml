@@ -2,8 +2,50 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ include "godaddy-webhook.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "godaddy-webhook.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "godaddy-webhook.labels" . | indent 4 }}
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - 'secrets'
+    verbs:
+      - 'get'
+  - apiGroups:
+      - 'flowcontrol.apiserver.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'get'
+      - 'watch'
+      - 'list'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "godaddy-webhook.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "godaddy-webhook.labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "godaddy-webhook.fullname" . }}
+subjects:
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: {{ include "godaddy-webhook.fullname" . }}
+    namespace: {{ .Release.Namespace }}
 ---
 # Grant the webhook permission to read the ConfigMap containing the Kubernetes
 # apiserver's requestheader-ca-certificate.
@@ -57,9 +99,6 @@ rules:
       - '*'
     verbs:
       - 'create'
-      - 'get'
-      - 'watch'
-      - 'list'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -76,35 +115,3 @@ subjects:
     kind: ServiceAccount
     name: {{ .Values.certManager.serviceAccountName }}
     namespace: {{ .Values.certManager.namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: {{ include "godaddy-webhook.fullname" . }}:service-rbac
-  labels:
-{{ include "godaddy-webhook.labels" . | indent 4 }}
-rules:
-  - apiGroups:
-      - 'flowcontrol.apiserver.k8s.io'
-    resources:
-      - '*'
-    verbs:
-      - 'get'
-      - 'watch'
-      - 'list'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: {{ include "godaddy-webhook.fullname" . }}:service-rbac
-  labels:
-{{ include "godaddy-webhook.labels" . | indent 4 }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ include "godaddy-webhook.fullname" . }}:service-rbac
-subjects:
-  - apiGroup: ""
-    kind: ServiceAccount
-    name: {{ include "godaddy-webhook.fullname" . }}
-    namespace: {{ .Release.Namespace }}

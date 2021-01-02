@@ -1,6 +1,8 @@
 {
-  "authAPIKey": "your GoDaddy authAPIKey",
-  "authAPISecret": "your GoDaddy authAPISecret",
+  "apiKeySecret": {
+    "key": "<GoDaddy API key>",
+    "secret": "<GoDaddy API key>"
+  },
   "production": true,
   "ttl": 600
 }

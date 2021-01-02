@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "godaddy-webhook.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 spec:
@@ -31,7 +32,7 @@ spec:
             - --tls-private-key-file=/tls/tls.key
           env:
             - name: GROUP_NAME
-              value: {{ .Values.groupName | quote }}
+              value: {{ .Values.groupName }}
           ports:
             - name: https
               containerPort: 443
