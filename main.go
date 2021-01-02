@@ -37,8 +37,8 @@ type Context struct {
 }
 
 // NewContext return a context. Timeout is in seconds
-func NewContext(timeout time.Duration) Context {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+func NewContext(timeoutInSeconds time.Duration) Context {
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutInSeconds*time.Second)
 	return Context{
 		ctx:    ctx,
 		cancel: cancel,
@@ -359,7 +359,7 @@ func (c *godaddyDNSProviderSolver) getZone(fqdn string) (string, error) {
 
 func (c *godaddyDNSProviderSolver) getAPIKey(cfg godaddyDNSProviderConfig, namespace string) (*string, *string, error) {
 
-	ctx := NewContext(time.Minute * 2)
+	ctx := NewContext(120)
 	defer ctx.cancel()
 
 	if cfg.APIKeySecretRef.LocalObjectReference.Name != nil {
