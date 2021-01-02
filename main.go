@@ -146,7 +146,7 @@ type godaddyDNSProviderConfig struct {
 	// These fields will be set by users in the
 	// `issuer.spec.acme.dns01.providers.webhook.config` field.
 
-	APIKeySecretRef SecretKeySelector `json:"apiKeySecret"`
+	APIKeySecretRef SecretKeySelector `json:"apiKeySecretRef"`
 	Production      bool              `json:"production"`
 	TTL             int               `json:"ttl"`
 }
