@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: fred78290/cert-manager-godaddy
-  tag: v1.0.0
+  tag: v1.20.1
   pullPolicy: IfNotPresent
 
 groupName: acme.mycompany.com

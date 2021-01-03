@@ -5,7 +5,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ include "godaddy-webhook.selfSignedIssuer" . }}
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Release.Namespace }}
   labels:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 spec:
@@ -18,7 +18,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ include "godaddy-webhook.rootCACertificate" . }}
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Release.Namespace }}
   labels:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 spec:
@@ -36,7 +36,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ include "godaddy-webhook.rootCAIssuer" . }}
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Release.Namespace }}
   labels:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 spec:
@@ -50,7 +50,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ include "godaddy-webhook.servingCertificate" . }}
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Release.Namespace }}
   labels:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 spec:
@@ -62,3 +62,4 @@ spec:
   - {{ include "godaddy-webhook.fullname" . }}
   - {{ include "godaddy-webhook.fullname" . }}.{{ .Release.Namespace }}
   - {{ include "godaddy-webhook.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "godaddy-webhook.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
