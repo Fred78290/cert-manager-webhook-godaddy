@@ -4,7 +4,12 @@
 ## Installation
 
 ```bash
-$ helm install godaddy-webhook --namespace cert-manager ./deploy/godaddy-webhook
+helm install godaddy-webhook \
+    --set groupName=acme.mycompany.com \
+    --set image.repository=fred78290/cert-manager-godaddy \
+    --set image.tag=v1.19.6 \
+    --set image.pullPolicy=Always \
+    --namespace cert-manager ./deploy/godaddy-webhook
 ```
 
 ## Issuer
@@ -12,6 +17,16 @@ $ helm install godaddy-webhook --namespace cert-manager ./deploy/godaddy-webhook
 ### ClusterIssuer
 
 ```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: godaddy-api-key-prod
+  namespace: cert-manager
+type: Opaque
+data:
+  key: <godaddy api key base64 encoded>
+  secret: <godaddy api secret base64 encoded>
+---  
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -21,7 +36,7 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: <your email>
     privateKeySecretRef:
-      name: letsencrypt-prod
+      name: letsencrypt-prod-account-key
     solvers:
     - selector:
         dnsNames:
@@ -29,8 +44,10 @@ spec:
       dns01:
         webhook:
           config:
-            authApiKey: <your GoDaddy authAPIKey>
-            authApiSecret: <your GoDaddy authApiSecret>
+            apiKeySecretRef:
+              name: godaddy-api-key-prod
+              key: key
+              secret: secret
             production: true
             ttl: 600
           groupName: acme.mycompany.com
