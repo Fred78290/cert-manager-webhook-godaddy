@@ -37,8 +37,8 @@ type Context struct {
 }
 
 // NewContext return a context. Timeout is in seconds
-func NewContext(timeout time.Duration) Context {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+func NewContext(timeoutInSeconds time.Duration) Context {
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutInSeconds*time.Second)
 	return Context{
 		ctx:    ctx,
 		cancel: cancel,
@@ -146,7 +146,7 @@ type godaddyDNSProviderConfig struct {
 	// These fields will be set by users in the
 	// `issuer.spec.acme.dns01.providers.webhook.config` field.
 
-	APIKeySecretRef SecretKeySelector `json:"apiKeySecret"`
+	APIKeySecretRef SecretKeySelector `json:"apiKeySecretRef"`
 	Production      bool              `json:"production"`
 	TTL             int               `json:"ttl"`
 }
@@ -172,7 +172,7 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 		return err
 	}
 
-	klog.V(6).Infof("Decoded configuration %v", cfg)
+	klog.V(4).Infof("Decoded configuration %v", cfg)
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
 
@@ -207,7 +207,7 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 		return err
 	}
 
-	klog.V(5).Infof("Decoded configuration %v", cfg)
+	klog.V(4).Infof("Decoded configuration %v", cfg)
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
 
@@ -359,35 +359,43 @@ func (c *godaddyDNSProviderSolver) getZone(fqdn string) (string, error) {
 
 func (c *godaddyDNSProviderSolver) getAPIKey(cfg godaddyDNSProviderConfig, namespace string) (*string, *string, error) {
 
-	ctx := NewContext(time.Minute * 2)
+	ctx := NewContext(120)
 	defer ctx.cancel()
 
 	if cfg.APIKeySecretRef.LocalObjectReference.Name != nil {
 		secretName := *cfg.APIKeySecretRef.LocalObjectReference.Name
 
-		klog.V(6).Infof("try to load secret `%s` in namespace:`%s`", secretName, namespace)
+		klog.V(4).Infof("try to load secret `%s` in namespace:`%s`", secretName, namespace)
 
 		sec, err := c.client.CoreV1().Secrets(namespace).Get(ctx.ctx, secretName, metav1.GetOptions{})
 		if err != nil {
+			klog.V(4).ErrorS(err, "unable to get secret `%s`", secretName)
 			return nil, nil, fmt.Errorf("unable to get secret `%s`; %v", secretName, err)
 		}
 
+		klog.V(4).Infof("Secret `%s` in namespace:`%s` found", secretName, namespace)
+
 		keyBytes, ok := sec.Data[cfg.APIKeySecretRef.Key]
 		if !ok {
+			klog.V(4).Info("key %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Key, secretName, namespace)
 			return nil, nil, fmt.Errorf("key %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Key, secretName, namespace)
 		}
 
 		secretBytes, ok := sec.Data[cfg.APIKeySecretRef.Secret]
 		if !ok {
+			klog.V(4).Info("secret %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Secret, secretName, namespace)
 			return nil, nil, fmt.Errorf("secret %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Secret, secretName, namespace)
 		}
 
 		apiKey := string(keyBytes)
 		apiSecret := string(secretBytes)
+
+		klog.V(4).Infof("GoDaddy use key pair %s:%s", apiKey, apiSecret)
+
 		return &apiKey, &apiSecret, nil
 	}
 
-	klog.V(6).Infof("GoDaddy use key pair %s:%s", cfg.APIKeySecretRef.Key, cfg.APIKeySecretRef.Secret)
+	klog.V(4).Infof("GoDaddy use key pair %s:%s", cfg.APIKeySecretRef.Key, cfg.APIKeySecretRef.Secret)
 
 	return &cfg.APIKeySecretRef.Key, &cfg.APIKeySecretRef.Secret, nil
 }
