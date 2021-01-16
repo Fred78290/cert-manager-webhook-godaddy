@@ -209,10 +209,10 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 	return c.updateRecords(cfg, ch.ResourceNamespace, rec, dnsZone, recordName)
 }
 
-func (c *godaddyDNSProviderSolver) getTXTRecords(authAPIKey, authAPISecret, baseURL, domainZone string) ([]DNSRecord, error) {
+func (c *godaddyDNSProviderSolver) getAllRecords(authAPIKey, authAPISecret, baseURL, domainZone string) ([]DNSRecord, error) {
 	var records []DNSRecord
 
-	url := fmt.Sprintf("/v1/domains/%s/records/TXT", domainZone)
+	url := fmt.Sprintf("/v1/domains/%s/records", domainZone)
 	resp, err := c.makeRequest(authAPIKey, authAPISecret, baseURL, http.MethodGet, url, nil)
 	if err != nil {
 		klog.Errorf("Unable to request: %s%s, got error:%s", baseURL, url, err)
@@ -241,14 +241,14 @@ func (c *godaddyDNSProviderSolver) getTXTRecords(authAPIKey, authAPISecret, base
 	return records, nil
 }
 
-func (c *godaddyDNSProviderSolver) updateTXTRecords(authAPIKey, authAPISecret, baseURL, domainZone string, records []DNSRecord) error {
+func (c *godaddyDNSProviderSolver) updateAllRecords(authAPIKey, authAPISecret, baseURL, domainZone string, records []DNSRecord) error {
 
 	body, e := json.Marshal(records)
 	if e != nil {
 		return e
 	}
 
-	url := fmt.Sprintf("/v1/domains/%s/records/TXT", domainZone)
+	url := fmt.Sprintf("/v1/domains/%s/records", domainZone)
 	resp, err := c.makeRequest(authAPIKey, authAPISecret, baseURL, http.MethodPut, url, bytes.NewReader(body))
 	if err != nil {
 		klog.Errorf("Unable to request: %s%s, got error:%s", baseURL, url, err)
@@ -303,12 +303,12 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 		return err
 	}
 
-	if records, err = c.getTXTRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone); err != nil {
+	if records, err = c.getAllRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone); err != nil {
 		return err
 	}
 
 	for index, record := range records {
-		if record.Name == recordName && record.Data == ch.Key {
+		if record.Name == recordName && record.Data == ch.Key && record.Type == "TXT" {
 			deleteIndex = index
 			break
 		}
@@ -319,7 +319,7 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 
 		records = append(records[:deleteIndex], records[deleteIndex+1:]...)
 
-		return c.updateTXTRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone, records)
+		return c.updateAllRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone, records)
 	}
 
 	return nil
