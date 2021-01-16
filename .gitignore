@@ -15,5 +15,7 @@
 cert-manager-webhook-example
 vendor
 debug/
+release/
 
 out/
+__main__
