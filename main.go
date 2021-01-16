@@ -47,11 +47,14 @@ func NewContext(timeoutInSeconds time.Duration) Context {
 
 // DNSRecord a DNS record
 type DNSRecord struct {
-	Type     string `json:"type"`
-	Name     string `json:"name"`
-	Data     string `json:"data"`
-	Priority int    `json:"priority,omitempty"`
-	TTL      int    `json:"ttl,omitempty"`
+	Type     string  `json:"type"`
+	Name     string  `json:"name"`
+	Data     string  `json:"data"`
+	TTL      int     `json:"ttl,omitempty"`
+	Priority *int    `json:"priority,omitempty"`
+	Weight   *int    `json:"weight,omitempty"`
+	Protocol *string `json:"protocol,omitempty"`
+	Service  *string `json:"service,omitempty"`
 }
 
 // GroupName a API group name
@@ -151,6 +154,17 @@ type godaddyDNSProviderConfig struct {
 	TTL             int               `json:"ttl"`
 }
 
+func goDaddyURL(production bool) string {
+	// https://developer.godaddy.com/doc/endpoint/domains
+	// OTE environment: https://api.ote-godaddy.com
+	// PRODUCTION environment: https://api.godaddy.com
+	if production {
+		return "https://api.godaddy.com"
+	}
+
+	return "https://api.ote-godaddy.com"
+}
+
 // Name is used as the name for this DNS solver when referencing it on the ACME
 // Issuer resource.
 // This should be unique **within the group name**, i.e. you can have two
@@ -195,6 +209,67 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 	return c.updateRecords(cfg, ch.ResourceNamespace, rec, dnsZone, recordName)
 }
 
+func (c *godaddyDNSProviderSolver) getAllRecords(authAPIKey, authAPISecret, baseURL, domainZone string) ([]DNSRecord, error) {
+	var records []DNSRecord
+
+	url := fmt.Sprintf("/v1/domains/%s/records", domainZone)
+	resp, err := c.makeRequest(authAPIKey, authAPISecret, baseURL, http.MethodGet, url, nil)
+	if err != nil {
+		klog.Errorf("Unable to request: %s%s, got error:%s", baseURL, url, err)
+
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		errStr := fmt.Sprintf("Unable to list records for zone: %s; Status: %v; Body: %s", domainZone, resp.StatusCode, string(bodyBytes))
+
+		klog.Errorln(errStr)
+
+		return nil, fmt.Errorf(errStr)
+	}
+
+	if err := json.Unmarshal(bodyBytes, &records); err != nil {
+		klog.Errorf("Can't decode config: %v", err)
+
+		return nil, fmt.Errorf("error decoding solver config: %v", err)
+	}
+
+	return records, nil
+}
+
+func (c *godaddyDNSProviderSolver) updateAllRecords(authAPIKey, authAPISecret, baseURL, domainZone string, records []DNSRecord) error {
+
+	body, e := json.Marshal(records)
+	if e != nil {
+		return e
+	}
+
+	url := fmt.Sprintf("/v1/domains/%s/records", domainZone)
+	resp, err := c.makeRequest(authAPIKey, authAPISecret, baseURL, http.MethodPut, url, bytes.NewReader(body))
+	if err != nil {
+		klog.Errorf("Unable to request: %s%s, got error:%s", baseURL, url, err)
+
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		errStr := fmt.Sprintf("Unable to update records for zone: %s; Status: %v; Body: %s", domainZone, resp.StatusCode, string(bodyBytes))
+
+		klog.Errorln(errStr)
+
+		return fmt.Errorf(errStr)
+	}
+
+	return nil
+}
+
 // CleanUp should delete the relevant TXT record from the DNS provider console.
 // If multiple TXT records exist with the same record name (e.g.
 // _acme-challenge.example.com) then **only** the record with the same `key`
@@ -202,10 +277,20 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 // This is in order to facilitate multiple DNS validations for the same domain
 // concurrently.
 func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
+	var records []DNSRecord
+	var deleteIndex = -1
+
 	cfg, err := loadConfig(ch.Config)
 	if err != nil {
 		return err
 	}
+
+	authAPIKey, authAPISecret, err := c.getAPIKey(cfg, ch.ResourceNamespace)
+	if err != nil {
+		return err
+	}
+
+	baseURL := goDaddyURL(cfg.Production)
 
 	klog.V(4).Infof("Decoded configuration %v", cfg)
 
@@ -218,17 +303,26 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 		return err
 	}
 
-	rec := []DNSRecord{
-		{
-			Type: "TXT",
-			Name: recordName,
-			Data: "null",
-		},
+	if records, err = c.getAllRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone); err != nil {
+		return err
 	}
 
-	klog.Infof("Cleanup record: %s", recordName)
+	for index, record := range records {
+		if record.Name == recordName && record.Data == ch.Key && record.Type == "TXT" {
+			deleteIndex = index
+			break
+		}
+	}
 
-	return c.updateRecords(cfg, ch.ResourceNamespace, rec, dnsZone, recordName)
+	if deleteIndex >= 0 {
+		klog.Infof("Cleanup record: %s", recordName)
+
+		records = append(records[:deleteIndex], records[deleteIndex+1:]...)
+
+		return c.updateAllRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone, records)
+	}
+
+	return nil
 }
 
 // Initialize will be called when the webhook first starts.
@@ -282,17 +376,11 @@ func (c *godaddyDNSProviderSolver) updateRecords(cfg godaddyDNSProviderConfig, r
 		return e
 	}
 
-	// https://developer.godaddy.com/doc/endpoint/domains
-	// OTE environment: https://api.ote-godaddy.com
-	// PRODUCTION environment: https://api.godaddy.com
-	baseURL := "https://api.ote-godaddy.com"
-	if cfg.Production {
-		baseURL = "https://api.godaddy.com"
-	}
+	baseURL := goDaddyURL(cfg.Production)
 
 	var resp *http.Response
 	url := fmt.Sprintf("/v1/domains/%s/records/TXT/%s", domainZone, recordName)
-	resp, err = c.makeRequest(cfg, *authAPIKey, *authAPISecret, baseURL, http.MethodPut, url, bytes.NewReader(body))
+	resp, err = c.makeRequest(*authAPIKey, *authAPISecret, baseURL, http.MethodPut, url, bytes.NewReader(body))
 	if err != nil {
 		klog.Errorf("Unable to request: %s%s, got error:%s", baseURL, url, err)
 
@@ -313,7 +401,7 @@ func (c *godaddyDNSProviderSolver) updateRecords(cfg godaddyDNSProviderConfig, r
 	return nil
 }
 
-func (c *godaddyDNSProviderSolver) makeRequest(cfg godaddyDNSProviderConfig, authAPIKey string, authAPISecret string, baseURL string, method string, uri string, body io.Reader) (*http.Response, error) {
+func (c *godaddyDNSProviderSolver) makeRequest(authAPIKey string, authAPISecret string, baseURL string, method string, uri string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", baseURL, uri), body)
 	if err != nil {
 		return nil, err
