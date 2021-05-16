@@ -86,7 +86,7 @@ jobs:
         run: ./scripts/fetch-test-binaries.sh
       - name: test
         shell: bash
-        run: ./scripts/test.sh
+        run: ./scripts/tesh.sh
       - name: Fix directory owner
         shell: bash
         run: sudo chown -R $USER vendor
