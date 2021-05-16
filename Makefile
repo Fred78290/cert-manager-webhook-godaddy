@@ -1,66 +1,74 @@
+ALL_ARCH = amd64 arm64
+
 .EXPORT_ALL_VARIABLES:
 
-all: build
-VERSION_MAJOR ?= 0
-VERSION_MINOR ?= 2
+all: $(addprefix build-arch-,$(ALL_ARCH))
+
+VERSION_MAJOR ?= 1
+VERSION_MINOR ?= 21
 VERSION_BUILD ?= 0
-DEB_VERSION ?= $(VERSION_MAJOR).$(VERSION_MINOR)-$(VERSION_BUILD)
 TAG?=v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 FLAGS=
 ENVVAR=
-GOOS?=linux
-GOARCH?=amd64
+GOOS?=$(shell go env GOOS)
+GOARCH?=$(shell go env GOARCH)
 REGISTRY?=fred78290
-BASEIMAGE?=k8s.gcr.io/debian-base-amd64:v1.0.0
 BUILD_DATE?=`date +%Y-%m-%dT%H:%M:%SZ`
-VERSION_LDFLAGS=-X main.phVersion=$(TAGS)
-
-ifdef BUILD_TAGS
-  TAGS_FLAG=--tags ${BUILD_TAGS}
-  PROVIDER=-${BUILD_TAGS}
-  FOR_PROVIDER=" for ${BUILD_TAGS}"
-else
-  TAGS_FLAG=
-  PROVIDER=
-  FOR_PROVIDER=
-endif
+VERSION_LDFLAGS=-X main.phVersion=$(TAG)
+IMAGE=$(REGISTRY)/cert-manager-godaddy
 
 deps:
 	go mod vendor
 
-build:
-	$(ENVVAR) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/cert-manager-godaddy-$(GOOS)-$(GOARCH) ${TAGS_FLAG}
+build: $(addprefix build-arch-,$(ALL_ARCH))
 
-make-image:
-	docker build --pull --build-arg BASEIMAGE=${BASEIMAGE} \
-	    -t ${REGISTRY}/cert-manager-godaddy${PROVIDER}:${TAG} .
+build-arch-%: deps clean-arch-%
+	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/$(GOOS)/$*/cert-manager-godaddy
 
-build-binary: clean deps
-	$(ENVVAR) make -e BUILD_DATE=${BUILD_DATE} -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e GOOS=linux -e GOARCH=amd64 build
+make-image: $(addprefix make-image-arch-,$(ALL_ARCH))
 
-dev-release: build-binary execute-release
-	@echo "Release ${TAG}${FOR_PROVIDER} completed"
+make-image-arch-%:
+	docker build --pull -t ${IMAGE}-$*:${TAG} -f Dockerfile.$* .
+	@echo "Image ${TAG}-$* completed"
 
-clean:
-#	sudo rm -rf out
+push-image: $(addprefix push-image-arch-,$(ALL_ARCH))
+
+push-image-arch-%:
+	docker push ${IMAGE}-$*:${TAG}
+
+push-manifest:
+	docker buildx build --pull --platform linux/amd64,linux/arm64 --push -t ${IMAGE}:${TAG} .
+	@echo "Image ${TAG}* completed"
+
+container-push-manifest: container push-manifest
+
+clean: $(addprefix clean-arch-,$(ALL_ARCH))
+
+clean-arch-%:
+	rm -f ./out/$(GOOS)/$*/cert-manager-godaddy
+
+docker-builder:
+	test -z "$(docker image ls | grep cert-manager-godaddy-builder)" && docker build -t cert-manager-godaddy-builder ./builder
+
+build-in-docker: $(addprefix build-in-docker-arch-,$(ALL_ARCH))
+
+build-in-docker-arch-%: clean-arch-% docker-builder
+	docker run --rm -v `pwd`:/gopath/src/github.com/Fred78290/cert-manager-webhook-godaddy/ cert-manager-godaddy-builder:latest bash \
+		-c 'cd /gopath/src/github.com/Fred78290/cert-manager-webhook-godaddy  \
+		&& BUILD_TAGS=${BUILD_TAGS} make -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-arch-$*'
+
+container: $(addprefix container-arch-,$(ALL_ARCH))
+
+container-arch-%: build-in-docker-arch-%
+	@echo "Full in-docker image ${TAG}-$* completed"
+
+go-lint:
+	golangci-lint run --timeout=15m ./...
 
 format:
 	test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -s -d {} + | tee /dev/stderr)" || \
     test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -s -w {} + | tee /dev/stderr)"
 
-docker-builder:
-	test -z "$(docker image ls | grep cert-manager-godaddy-builder)" && docker build -t cert-manager-godaddy-builder ./builder
-
-build-in-docker: docker-builder
-	docker run --rm -v `pwd`:/gopath/src/github.com/Fred78290/cert-manager-webhook-godaddy/ cert-manager-godaddy-builder:latest bash \
-		-c 'cd /gopath/src/github.com/Fred78290/cert-manager-webhook-godaddy  \
-		&& BUILD_TAGS=${BUILD_TAGS} make -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-binary'
-
-release: build-in-docker execute-release
-	@echo "Full in-docker release ${TAG}${FOR_PROVIDER} completed"
-
-container: clean build-in-docker make-image
-	@echo "Created in-docker image ${TAG}${FOR_PROVIDER}"
 
 .PHONY: all deps build clean format execute-release dev-release docker-builder build-in-docker release generate
 
