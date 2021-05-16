@@ -1,6 +1,7 @@
 #!/bin/bash
+sudo rm -rf out
 
-make -e REGISTRY=fred78290 -e TAG=v1.20.1 container
+VERSION=v1.20.5
+REGISTRY=devregistry.aldunelabs.com
 
-docker tag fred78290/cert-manager-godaddy:v1.20.1 localhost:32000/cert-manager-godaddy:v1.20.1
-docker push localhost:32000/cert-manager-godaddy:v1.20.1
+make -e REGISTRY=$REGISTRY -e TAG=$VERSION container-push-manifest
