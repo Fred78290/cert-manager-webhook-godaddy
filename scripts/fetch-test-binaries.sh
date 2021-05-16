@@ -3,7 +3,7 @@
 set -e
 
 k8s_version=1.19.2
-goarch=amd64
+goarch=$(go env GOARCH)
 goos="unknown"
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
