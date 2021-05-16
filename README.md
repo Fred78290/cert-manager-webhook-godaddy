@@ -1,3 +1,6 @@
+[![Build Status](https://github.com/fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yml/badge.svg?branch=v1.20.5)](https://github.com/Fred78290/Fred78290_cert-manager-webhook-godaddy/actions)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Fred78290_cert-manager-webhook-godaddy&metric=alert_status)](https://sonarcloud.io/dashboard?id=Fred78290_cert-manager-webhook-godaddy)
+[![Licence](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Fred78290/cert-manager-webhook-godaddy/blob/master/LICENSE)
 # ACME webhook for GoDaddy
 
 
@@ -7,7 +10,7 @@
 helm install godaddy-webhook \
     --set groupName=acme.mycompany.com \
     --set image.repository=fred78290/cert-manager-godaddy \
-    --set image.tag=v1.20.1 \
+    --set image.tag=v1.20.5 \
     --set image.pullPolicy=Always \
     --namespace cert-manager ./deploy/godaddy-webhook
 ```
@@ -116,7 +119,7 @@ $ scripts/fetch-test-binaries.sh
 You can run the test suite with:
 
 ```bash
-$ TEST_ZONE_NAME=example.com go test .
+$ scripts/test.sh
 ```
 
 The example file has a number of areas you must fill in and replace with your

@@ -18,7 +18,8 @@
             "mode": "test",
             "program": "${workspaceFolder}",
             "env": {
-                "TEST_ZONE_NAME": "aldunelabs.com."
+                "TEST_ZONE_NAME": "aldunelabs.com.",
+                "TEST_MANIFEST_PATH": "__main__/testdata/godaddy"
             },
             "args": [
                 "-test.run",
