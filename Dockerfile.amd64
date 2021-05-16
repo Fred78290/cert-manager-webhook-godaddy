@@ -12,24 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#ARG BASEIMAGE=gcr.io/distroless/static:latest-amd64
-FROM alpine AS builder
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-
-RUN apk add -U --no-cache ca-certificates
-
-COPY out .
-
-RUN mv /$TARGETPLATFORM/cert-manager-godaddy /cert-manager-godaddy
-
-FROM ubuntu:focal
-
+ARG BASEIMAGE=ubuntu:focal
+FROM $BASEIMAGE
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
-COPY --from=builder /etc/ssl /etc/ssl
-COPY --from=builder /cert-manager-godaddy /usr/local/bin/cert-manager-godaddy
-RUN chmod uog+x /usr/local/bin/cert-manager-godaddy
+COPY out/linux/amd64/cert-manager-godaddy /usr/local/bin/cert-manager-godaddy
 
 EXPOSE 5200
 
