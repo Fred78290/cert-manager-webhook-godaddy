@@ -31,6 +31,6 @@ cat > __main__/testdata/godaddy/config.json <<EOF
 }
 EOF
 
-TEST_ZONE_NAME=aldunelabs.com. TEST_MANIFEST_PATH=__main__/testdata/godaddy go test .
+TEST_ZONE_NAME="${TEST_ZONE_NAME}." TEST_MANIFEST_PATH=__main__/testdata/godaddy go test .
 
 popd
