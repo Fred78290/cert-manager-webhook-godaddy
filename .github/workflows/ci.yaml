@@ -59,7 +59,7 @@ jobs:
     env:
       GODADDY_API_KEY: ${{ secrets.GODADDY_API_KEY }}
       GODADDY_API_SECRET: ${{ secrets.GODADDY_API_SECRET }}
-      TEST_ZONE_NAME: ${{ secrets.TEST_ZONE_NAME }
+      TEST_ZONE_NAME: ${{ secrets.TEST_ZONE_NAME }}
     runs-on: ubuntu-latest
     needs: build
     steps:
