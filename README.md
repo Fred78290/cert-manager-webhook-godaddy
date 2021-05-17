@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yml/badge.svg?branch=v1.20.5)](https://github.com/Fred78290/Fred78290_cert-manager-webhook-godaddy/actions)
+[![Build status](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml/badge.svg?branch=kubernetes-v1.20)](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Fred78290_cert-manager-webhook-godaddy&metric=alert_status)](https://sonarcloud.io/dashboard?id=Fred78290_cert-manager-webhook-godaddy)
 [![Licence](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Fred78290/cert-manager-webhook-godaddy/blob/master/LICENSE)
 # ACME webhook for GoDaddy
