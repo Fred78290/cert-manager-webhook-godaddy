@@ -20,4 +20,4 @@ COPY out/linux/amd64/cert-manager-godaddy /usr/local/bin/cert-manager-godaddy
 
 EXPOSE 5200
 
-CMD ["/usr/local/bin/cert-manager-godaddy"]
+ENTRYPOINT ["/usr/local/bin/cert-manager-godaddy"]
