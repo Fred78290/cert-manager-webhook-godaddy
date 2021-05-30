@@ -33,4 +33,4 @@ RUN chmod uog+x /usr/local/bin/cert-manager-godaddy
 
 EXPOSE 5200
 
-CMD ["/usr/local/bin/cert-manager-godaddy"]
+ENTRYPOINT ["/usr/local/bin/cert-manager-godaddy"]
