@@ -94,6 +94,15 @@ metadata:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 rules:
   - apiGroups:
+      - 'flowcontrol.apiserver.k8s.io'
+      - 'flowschemas.flowcontrol.apiserver.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'get'
+      - 'watch'
+      - 'list'
+  - apiGroups:
       - {{ .Values.groupName }}
     resources:
       - '*'
