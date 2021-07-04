@@ -29,6 +29,14 @@ rules:
       - 'get'
       - 'watch'
       - 'list'
+  - apiGroups:
+      - 'flowschemas.flowcontrol.apiserver.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'get'
+      - 'watch'
+      - 'list'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -94,15 +102,6 @@ metadata:
 {{ include "godaddy-webhook.labels" . | indent 4 }}
 rules:
   - apiGroups:
-      - 'flowcontrol.apiserver.k8s.io'
-      - 'flowschemas.flowcontrol.apiserver.k8s.io'
-    resources:
-      - '*'
-    verbs:
-      - 'get'
-      - 'watch'
-      - 'list'
-  - apiGroups:
       - {{ .Values.groupName }}
     resources:
       - '*'
@@ -123,4 +122,46 @@ subjects:
   - apiGroup: ""
     kind: ServiceAccount
     name: {{ .Values.certManager.serviceAccountName }}
+    namespace: {{ .Values.certManager.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "godaddy-webhook.fullname" . }}:flows-auth
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "godaddy-webhook.labels" . | indent 4 }}
+rules:
+  - apiGroups:
+      - 'flowcontrol.apiserver.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'get'
+      - 'watch'
+      - 'list'
+  - apiGroups:
+      - 'flowschemas.flowcontrol.apiserver.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'get'
+      - 'watch'
+      - 'list'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "godaddy-webhook.fullname" . }}:flows-auth
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "godaddy-webhook.labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "godaddy-webhook.fullname" . }}:flows-auth
+subjects:
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: {{ include "godaddy-webhook.fullname" . }}
     namespace: {{ .Values.certManager.namespace }}
