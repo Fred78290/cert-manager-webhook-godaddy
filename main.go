@@ -13,18 +13,18 @@ import (
 	"strings"
 	"time"
 
-	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/klog/v2"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
-	"github.com/jetstack/cert-manager/pkg/acme/webhook/cmd"
-	"github.com/jetstack/cert-manager/pkg/issuer/acme/dns/util"
+	"github.com/cert-manager/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
+	"github.com/cert-manager/cert-manager/pkg/acme/webhook/cmd"
+	"github.com/cert-manager/cert-manager/pkg/issuer/acme/dns/util"
 
-	pkgutil "github.com/jetstack/cert-manager/pkg/util"
+	pkgutil "github.com/cert-manager/cert-manager/pkg/util"
 )
 
 var phVersion = "v0.0.0-unset"
@@ -395,8 +395,12 @@ func (c *godaddyDNSProviderSolver) makeRequest(authAPIKey string, authAPISecret 
 		return nil, err
 	}
 
+	userAgent := fmt.Sprintf("%s/%s (%s) cert-manager/%s",
+		"godaddy-webhook",
+		phVersion, pkgutil.VersionInfo().Platform, phBuildDate)
+
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", pkgutil.CertManagerUserAgent)
+	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", authAPIKey, authAPISecret))
 
