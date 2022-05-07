@@ -5,9 +5,10 @@ ALL_ARCH = amd64 arm64
 all: $(addprefix build-arch-,$(ALL_ARCH))
 
 VERSION_MAJOR ?= 1
-VERSION_MINOR ?= 21
+VERSION_MINOR ?= 24
 VERSION_BUILD ?= 0
-TAG?=v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
+TAG?=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
+KUBE_VERSION=1.23.5
 FLAGS=
 ENVVAR=
 GOOS?=$(shell go env GOOS)
@@ -16,6 +17,19 @@ REGISTRY?=fred78290
 BUILD_DATE?=`date +%Y-%m-%dT%H:%M:%SZ`
 VERSION_LDFLAGS=-X main.phVersion=$(TAG)
 IMAGE=$(REGISTRY)/cert-manager-godaddy
+
+$(shell mkdir -p "$(OUT)")
+
+export TEST_ASSET_ETCD=_test/kubebuilder/bin/etcd
+export TEST_ASSET_KUBE_APISERVER=_test/kubebuilder/bin/kube-apiserver
+export TEST_ASSET_KUBECTL=_test/kubebuilder/bin/kubectl
+export TEST_MANIFEST_PATH=_test/kubebuilder/godaddy
+
+test: _test/kubebuilder
+	go test -v .
+
+_test/kubebuilder:
+	./scripts/config.sh https://go.kubebuilder.io/test-tools/$(KUBE_VERSION)/$(GOOS)/$(GOARCH)
 
 deps:
 	go mod vendor

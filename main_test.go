@@ -26,10 +26,13 @@ func TestRunsSuite(t *testing.T) {
 
 	fixture := dns.NewFixture(&godaddyDNSProviderSolver{},
 		dns.SetResolvedZone(zone),
+		dns.SetDNSName(zone),
+		dns.SetDNSServer("10.0.0.5:53"),
 		dns.SetAllowAmbientCredentials(false),
 		dns.SetManifestPath(manifest),
-		dns.SetBinariesPath("__main__/hack/bin"),
 	)
 
-	fixture.RunConformance(t)
+	//fixture.RunConformance(t)
+	fixture.RunBasic(t)
+	fixture.RunExtended(t)
 }
