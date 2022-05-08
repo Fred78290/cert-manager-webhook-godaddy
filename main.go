@@ -10,10 +10,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
 	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,9 +23,13 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
-	"github.com/cert-manager/cert-manager/pkg/acme/webhook/cmd"
 	"github.com/cert-manager/cert-manager/pkg/issuer/acme/dns/util"
 
+	cmdutil "github.com/cert-manager/cert-manager/cmd/util"
+	"github.com/cert-manager/cert-manager/pkg/acme/webhook"
+	"github.com/cert-manager/cert-manager/pkg/acme/webhook/cmd/server"
+
+	logf "github.com/cert-manager/cert-manager/pkg/logs"
 	pkgutil "github.com/cert-manager/cert-manager/pkg/util"
 )
 
@@ -60,35 +66,43 @@ type DNSRecord struct {
 // GroupName a API group name
 var GroupName = os.Getenv("GROUP_NAME")
 
-func main() {
+func runWebhookServer(groupName string, hooks ...webhook.Solver) {
+	stopCh, exit := cmdutil.SetupExitHandler(cmdutil.GracefulShutdown)
+	defer exit() // This function might call os.Exit, so defer last
 
-	versionPtr := flag.Bool("version", false, "Give the version")
+	logs.InitLogs()
+	defer logs.FlushLogs()
 
-	// Declare it
-	flag.String("tls-cert-file", "/tls/tls.crt", "tls-cert-file")
-	flag.String("tls-private-key-file", "/tls/tls.key", "tls-private-key-file")
-
-	flag.Parse()
-
-	if *versionPtr {
-		klog.Infof("The current version is:%s, build at:%s", phVersion, phBuildDate)
-	} else {
-
-		if GroupName == "" {
-			panic("GROUP_NAME must be specified")
-		}
-
-		klog.Infof("Launch cert-manager-webhook-godaddy with group name: %s", GroupName)
-
-		// This will register our godaddy DNS provider with the webhook serving
-		// library, making it available as an API under the provided GroupName.
-		// You can register multiple DNS provider implementations with a single
-		// webhook, where the Name() method will be used to disambiguate between
-		// the different implementations.
-		cmd.RunWebhookServer(GroupName,
-			&godaddyDNSProviderSolver{},
-		)
+	if len(os.Getenv("GOMAXPROCS")) == 0 {
+		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
+
+	cmd := server.NewCommandStartWebhookServer(os.Stdout, os.Stderr, stopCh, groupName, hooks...)
+	//cmd.Version = fmt.Sprintf("The current version is:%s, build at:%s", phVersion, phBuildDate)
+
+	cmd.Flags().AddGoFlagSet(flag.CommandLine)
+
+	klog.Infof("Launch cert-manager-webhook-godaddy with group name: %s", GroupName)
+
+	if err := cmd.Execute(); err != nil {
+		logf.Log.Error(err, "error executing command")
+		cmdutil.SetExitCode(err)
+	}
+}
+
+func main() {
+	if GroupName == "" {
+		panic("GROUP_NAME must be specified")
+	}
+
+	// This will register our godaddy DNS provider with the webhook serving
+	// library, making it available as an API under the provided GroupName.
+	// You can register multiple DNS provider implementations with a single
+	// webhook, where the Name() method will be used to disambiguate between
+	// the different implementations.
+	runWebhookServer(GroupName,
+		&godaddyDNSProviderSolver{},
+	)
 }
 
 // godaddyDNSProviderSolver implements the provider-specific logic needed to
@@ -190,8 +204,9 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
 
-	dnsZone, err := c.getZone(ch.ResolvedZone)
+	dnsZone, err := c.getZone(ch.ResolvedFQDN)
 	if err != nil {
+		klog.Errorf("Unable to get zone:%s, error: %v", ch.ResolvedZone, err)
 		return err
 	}
 
@@ -202,7 +217,7 @@ func (c *godaddyDNSProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error 
 		TTL:  cfg.TTL,
 	}
 
-	klog.Infof("Present record: %s with key: %s", recordName, ch.Key)
+	klog.Infof("Present record: %s on zone: %s with key: %s", recordName, dnsZone, ch.Key)
 
 	return c.addRecord(cfg, ch.ResourceNamespace, rec, dnsZone, recordName)
 }
@@ -290,11 +305,13 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 
 	recordName := c.extractRecordName(ch.ResolvedFQDN, ch.ResolvedZone)
 
-	dnsZone, err := c.getZone(ch.ResolvedZone)
+	dnsZone, err := c.getZone(ch.ResolvedFQDN)
 	if err != nil {
 		klog.Errorf("Unable to get zone:%s, error: %v", ch.ResolvedZone, err)
 		return err
 	}
+
+	klog.Infof("Cleanup record: %s on zone: %s with key: %s", recordName, dnsZone, ch.Key)
 
 	if records, err = c.getAllRecords(*authAPIKey, *authAPISecret, baseURL, dnsZone); err != nil {
 		klog.Errorf("Unable to fetch records from zone:%s, error: %v", dnsZone, err)
@@ -303,8 +320,12 @@ func (c *godaddyDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error 
 
 	for _, record := range records {
 		if record.Name == recordName && record.Data == ch.Key && record.Type == "TXT" {
-			klog.Infof("Cleanup record: %s", record.Name)
-			return c.deleteRecord(*authAPIKey, *authAPISecret, baseURL, dnsZone, &record)
+			if err = c.deleteRecord(*authAPIKey, *authAPISecret, baseURL, dnsZone, &record); err == nil {
+				klog.Infof("Cleaned record: %s on zone: %s with key: %s", recordName, dnsZone, ch.Key)
+			} else {
+				klog.ErrorS(err, "Cleaned record: %s on zone: %s with key: %s", recordName, dnsZone, ch.Key)
+			}
+			return err
 		}
 	}
 

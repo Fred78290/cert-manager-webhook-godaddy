@@ -9,7 +9,13 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}"
+            "program": "${workspaceFolder}",
+            "env": {
+                "GROUP_NAME": "aldunelabs.com"
+            },
+            "args": [
+                "--version",
+            ]
         },
         {
             "name": "Test Package",
@@ -18,8 +24,11 @@
             "mode": "test",
             "program": "${workspaceFolder}",
             "env": {
+                "TEST_ASSET_ETCD": "_test/kubebuilder/bin/etcd",
+                "TEST_ASSET_KUBE_APISERVER": "_test/kubebuilder/bin/kube-apiserver",
+                "TEST_ASSET_KUBECTL": "_test/kubebuilder/bin/kubectl",
                 "TEST_ZONE_NAME": "aldunelabs.com.",
-                "TEST_MANIFEST_PATH": "__main__/testdata/godaddy"
+                "TEST_MANIFEST_PATH": "_test/kubebuilder/godaddy"
             },
             "args": [
                 "-test.run",

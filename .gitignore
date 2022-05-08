@@ -16,6 +16,7 @@ cert-manager-webhook-example
 vendor
 debug/
 release/
-
+.vscode/
 out/
 __main__
+_test
