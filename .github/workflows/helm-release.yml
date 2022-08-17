@@ -16,5 +16,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
-          target_dir: ./deploy/godaddy-webhook
+          charts_dir: ./deploy/
           linting: off
