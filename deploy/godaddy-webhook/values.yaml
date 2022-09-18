@@ -23,6 +23,9 @@ service:
   type: ClusterIP
   port: 443
 
+dnsPolicy: "default"
+dnsConfig: {}
+
 resources: {}
 
 nodeSelector: {}
