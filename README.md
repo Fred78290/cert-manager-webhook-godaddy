@@ -7,12 +7,14 @@
 ## Installation
 
 ```bash
-helm install godaddy-webhook \
+helm repo add godaddy-webhook https://fred78290.github.io/cert-manager-webhook-godaddy/
+helm repo update
+
+helm upgrade -i godaddy-webhook godaddy-webhook/godaddy-webhook \
     --set groupName=acme.mycompany.com \
-    --set image.repository=fred78290/cert-manager-godaddy \
-    --set image.tag=v1.20.5 \
+    --set image.tag=v1.24.2 \
     --set image.pullPolicy=Always \
-    --namespace cert-manager ./deploy/godaddy-webhook
+    --namespace cert-manager
 ```
 
 ## Issuer
@@ -43,7 +45,7 @@ spec:
     solvers:
     - selector:
         dnsNames:
-        - '*.example.com'
+        - '*.mycompany.com'
       dns01:
         webhook:
           config:
