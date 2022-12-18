@@ -1,4 +1,4 @@
-[![Build status](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml)
+[![Build status](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml/badge.svg?branch=kubernetes-v1.25)](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Fred78290_cert-manager-webhook-godaddy&metric=alert_status)](https://sonarcloud.io/dashboard?id=Fred78290_cert-manager-webhook-godaddy)
 [![Licence](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Fred78290/cert-manager-webhook-godaddy/blob/master/LICENSE)
 # ACME webhook for GoDaddy
@@ -12,7 +12,7 @@ helm repo update
 
 helm upgrade -i godaddy-webhook godaddy-webhook/godaddy-webhook \
     --set groupName=acme.mycompany.com \
-    --set image.tag=v1.24.2 \
+    --set image.tag=v1.25.5 \
     --set image.pullPolicy=Always \
     --namespace cert-manager
 ```
@@ -79,7 +79,7 @@ spec:
 Ingress
 
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
