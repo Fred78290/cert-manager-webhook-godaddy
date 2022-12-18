@@ -23,7 +23,7 @@ service:
   type: ClusterIP
   port: 443
 
-dnsPolicy: "Default"
+dnsPolicy: "ClusterFirst"
 dnsConfig: {}
 
 resources: {}
