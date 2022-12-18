@@ -3,9 +3,9 @@ entries:
   godaddy-webhook:
   - apiVersion: v1
     appVersion: 1.24.6
-    created: "2022-09-26T13:16:53.909090731Z"
+    created: "2022-12-18T11:54:09.874639517Z"
     description: A Helm chart for Kubernetes
-    digest: 2d09ebc5d2d9d996fc7d34542d6fc3d4ff1b387fb0cf32e6b4d65a884955cbb1
+    digest: 12c1bc7780253384174d85cdfbcaf25fb71160a1af6bbf0b839464f278809228
     name: godaddy-webhook
     urls:
     - https://Fred78290.github.io/cert-manager-webhook-godaddy/godaddy-webhook-1.24.6.tgz
@@ -19,4 +19,4 @@ entries:
     urls:
     - https://Fred78290.github.io/cert-manager-webhook-godaddy/godaddy-webhook-1.24.2.tgz
     version: 1.24.2
-generated: "2022-09-26T13:16:53.908297028Z"
+generated: "2022-12-18T11:54:09.874062492Z"
