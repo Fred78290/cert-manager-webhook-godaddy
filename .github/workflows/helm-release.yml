@@ -3,6 +3,8 @@
 name: release helm chart
 on:
   push:
+    branches-ignore:
+      - master
     tags: 'v[0-9]+.[0-9]+.*[0-9]*'
 
 jobs:
@@ -10,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: publish Helm charts
         uses: stefanprodan/helm-gh-pages@master
         with:
