@@ -22,8 +22,8 @@ entries:
     version: 1.26.0
   - apiVersion: v2
     appVersion: 1.25.5
-    created: "2022-12-23T12:12:03.508527095Z"
-    digest: e5e8fbf13b5cc298a81a0583743b8debba84a3d6c105da3d7b19fbc1306b7e59
+    created: "2022-12-23T12:12:12.639286376Z"
+    digest: 885fc297097584eff0595c750908392d6c7fff2d5426d992793b21950f0eca1b
     home: https://github.com/Fred78290/cert-manager-webhook-godaddy/
     icon: https://raw.githubusercontent.com/Fred78290/cert-manager-webhook-godaddy/master/images/cert-manager-godaddy.png
     keywords:
@@ -57,4 +57,4 @@ entries:
     urls:
     - https://Fred78290.github.io/cert-manager-webhook-godaddy/godaddy-webhook-1.24.6.tgz
     version: 1.24.6
-generated: "2022-12-23T12:12:03.507360888Z"
+generated: "2022-12-23T12:12:12.638722445Z"
