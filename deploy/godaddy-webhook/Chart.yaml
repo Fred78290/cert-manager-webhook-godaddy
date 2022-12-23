@@ -6,10 +6,10 @@ version: 1.26.0
 home: https://github.com/Fred78290/cert-manager-webhook-godaddy/
 icon: https://raw.githubusercontent.com/Fred78290/cert-manager-webhook-godaddy/master/images/cert-manager-godaddy.png
 keywords:
-- cert-manager
-- godaddy
+  - cert-manager
+  - godaddy
 maintainers:
-- name: Fred78290
-  url: https://github.com/Fred78290/
+  - name: Fred78290
+    url: https://github.com/Fred78290/
 sources:
-- https://github.com/Fred78290/cert-manager-webhook-godaddy/
+  - https://github.com/Fred78290/cert-manager-webhook-godaddy/
