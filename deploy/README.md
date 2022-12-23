@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./images/cert-manager-godaddy.svg" height="256" width="256" alt="cert-manager-webhook-godaddy project logo" />
+  <img src="https://raw.githubusercontent.com/Fred78290/cert-manager-webhook-godaddy/master/images/cert-manager-godaddy.svg" height="256" width="256" alt="cert-manager-webhook-godaddy project logo" />
 </p>
 
 <p align="center">
