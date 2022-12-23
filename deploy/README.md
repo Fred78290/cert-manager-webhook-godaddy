@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./images/cert-manager-godaddy.svg" height="256" width="256" alt="cert-manager-webhook-godaddy project logo" />
+  <img src="https://raw.githubusercontent.com/Fred78290/cert-manager-webhook-godaddy/master/images/cert-manager-godaddy.svg" height="256" width="256" alt="cert-manager-webhook-godaddy project logo" />
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@ helm repo update
 
 helm upgrade -i godaddy-webhook godaddy-webhook/godaddy-webhook \
     --set groupName=acme.mycompany.com \
-    --set image.tag=v1.25.5 \
+    --set image.tag=v1.26.0 \
     --set image.pullPolicy=Always \
     --namespace cert-manager
 ```
@@ -91,7 +91,7 @@ spec:
 Ingress
 
 ```yaml
-apiVersion: networking.k8s.io/v1
+apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: example-ingress
