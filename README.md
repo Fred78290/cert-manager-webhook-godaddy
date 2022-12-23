@@ -1,8 +1,20 @@
-[![Build status](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Fred78290_cert-manager-webhook-godaddy&metric=alert_status)](https://sonarcloud.io/dashboard?id=Fred78290_cert-manager-webhook-godaddy)
-[![Licence](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Fred78290/cert-manager-webhook-godaddy/blob/master/LICENSE)
-# ACME webhook for GoDaddy
+<p align="center">
+  <img src="./images/cert-manager-godaddy.svg" height="256" width="256" alt="cert-manager-webhook-godaddy project logo" />
+</p>
 
+<p align="center">
+<a href="https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml">
+  <img alt="Build Status" src="https://github.com/Fred78290/cert-manager-webhook-godaddy/actions/workflows/ci.yaml/badge.svg?branch=master">
+</a>
+<a href="https://sonarcloud.io/dashboard?id=Fred78290_cert-manager-webhook-godaddy">
+  <img alt="Quality Gate Status" src="https://sonarcloud.io/api/project_badges/measure?project=Fred78290_cert-manager-webhook-godaddy&metric=alert_status">
+</a>
+<a href="https://github.com/Fred78290/cert-manager-webhook-godaddy/blob/master/LICENSE">
+  <img alt="Licence" src="https://img.shields.io/hexpm/l/plug.svg">
+</a>
+</p>
+
+# cert-manager webhook for GoDaddy
 
 ## Installation
 
