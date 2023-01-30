@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
@@ -235,7 +234,7 @@ func (c *godaddyDNSProviderSolver) getAllRecords(authAPIKey, authAPISecret, base
 
 	defer resp.Body.Close()
 
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	bodyBytes, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		errStr := fmt.Sprintf("Unable to list records for zone: %s; Status: %v; Body: %s", domainZone, resp.StatusCode, string(bodyBytes))
@@ -269,7 +268,7 @@ func (c *godaddyDNSProviderSolver) deleteRecord(authAPIKey, authAPISecret, baseU
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		bodyBytes, _ := io.ReadAll(resp.Body)
 		errStr := fmt.Sprintf("Unable to delete records for zone: %s; Status: %v; Body: %s", domainZone, resp.StatusCode, string(bodyBytes))
 
 		klog.Errorln(errStr)
@@ -399,7 +398,7 @@ func (c *godaddyDNSProviderSolver) addRecord(cfg godaddyDNSProviderConfig, resou
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		bodyBytes, _ := io.ReadAll(resp.Body)
 		errStr := fmt.Sprintf("could not create record %v; Status: %v; Body: %s", string(body), resp.StatusCode, string(bodyBytes))
 
 		klog.Errorln(errStr)
