@@ -1,11 +1,13 @@
 #!/bin/bash
+set -o pipefail -o nounset
+
 CURDIR=$(dirname $0)
 
 GOOS=$(go env GOOS)
 GOARCH=$(go env GOARCH)
 GODADDY_API_KEY_BASE64=$(echo -n "$GODADDY_API_KEY" | base64)
 GODADDY_API_SECRET_BASE64=$(echo -n "$GODADDY_API_SECRET" | base64)
-KUBE_VERSION=1.23.5
+KUBE_VERSION=1.27.1
 
 pushd $CURDIR/../
 
