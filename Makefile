@@ -18,8 +18,6 @@ BUILD_DATE?=`date +%Y-%m-%dT%H:%M:%SZ`
 VERSION_LDFLAGS=-X main.phVersion=$(TAG)
 IMAGE=$(REGISTRY)/cert-manager-godaddy
 
-$(shell mkdir -p "$(OUT)")
-
 export TEST_ASSET_ETCD=_test/kubebuilder/bin/etcd
 export TEST_ASSET_KUBE_APISERVER=_test/kubebuilder/bin/kube-apiserver
 export TEST_ASSET_KUBECTL=_test/kubebuilder/bin/kubectl
@@ -37,7 +35,7 @@ deps:
 build: $(addprefix build-arch-,$(ALL_ARCH))
 
 build-arch-%: deps clean-arch-%
-	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/$(GOOS)/$*/cert-manager-godaddy
+	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -buildvcs=false -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/$(GOOS)/$*/cert-manager-godaddy
 
 make-image: $(addprefix make-image-arch-,$(ALL_ARCH))
 
