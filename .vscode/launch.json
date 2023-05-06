@@ -11,11 +11,18 @@
             "mode": "debug",
             "program": "${workspaceFolder}",
             "env": {
-                "GROUP_NAME": "aldunelabs.com"
+                "GROUP_NAME": "aldunelabs.com",
+				"KUBERNETES_SERVICE_HOST": "vmware-ca-k8s-masterkube.aldunelabs.com",
+				"KUBERNETES_SERVICE_PORT": "6443",
             },
             "args": [
-                "--version",
-            ]
+				"--authorization-kubeconfig=${env:HOME}/.kube/config",
+				"--authentication-kubeconfig=${env:HOME}/.kube/config",
+				"--authentication-skip-lookup=false",
+				"--kubeconfig=${env:HOME}/.kube/config",
+				"--tls-cert-file=${env:HOME}/.acme.sh/aldunelabs.com/aldunelabs.com.cer",
+				"--tls-private-key-file=${env:HOME}/.acme.sh/aldunelabs.com/aldunelabs.com.key"
+			]
         },
         {
             "name": "Test Package",
@@ -28,7 +35,8 @@
                 "TEST_ASSET_KUBE_APISERVER": "_test/kubebuilder/bin/kube-apiserver",
                 "TEST_ASSET_KUBECTL": "_test/kubebuilder/bin/kubectl",
                 "TEST_ZONE_NAME": "aldunelabs.com.",
-                "TEST_MANIFEST_PATH": "_test/kubebuilder/godaddy"
+                "TEST_MANIFEST_PATH": "_test/kubebuilder/godaddy",
+				"TEST_DNS_SERVER": "10.0.0.5:53"
             },
             "args": [
                 "-test.run",

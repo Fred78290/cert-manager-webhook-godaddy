@@ -24,7 +24,7 @@ import (
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"github.com/cert-manager/cert-manager/pkg/issuer/acme/dns/util"
 
-	cmdutil "github.com/cert-manager/cert-manager/cmd/util"
+	cmdutil "github.com/Fred78290/cert-manager-webhook-godaddy/internal/cmd/util"
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook"
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook/cmd/server"
 
