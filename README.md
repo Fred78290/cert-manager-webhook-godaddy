@@ -24,7 +24,7 @@ helm repo update
 
 helm upgrade -i godaddy-webhook godaddy-webhook/godaddy-webhook \
     --set groupName=acme.mycompany.com \
-    --set image.tag=v1.27.1 \
+    --set image.tag=v1.27.2 \
     --set image.pullPolicy=Always \
     --namespace cert-manager
 ```
