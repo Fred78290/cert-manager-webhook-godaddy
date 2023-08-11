@@ -23,7 +23,7 @@ COPY out .
 
 RUN mv /$TARGETPLATFORM/cert-manager-godaddy /cert-manager-godaddy
 
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 LABEL maintainer="Frederic Boltz <frederic.boltz@gmail.com>"
 
