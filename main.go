@@ -24,7 +24,7 @@ import (
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"github.com/cert-manager/cert-manager/pkg/issuer/acme/dns/util"
 
-	cmdutil "github.com/Fred78290/cert-manager-webhook-godaddy/internal/cmd/util"
+	"github.com/Fred78290/cert-manager-webhook-godaddy/utils"
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook"
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook/cmd/server"
 
@@ -66,7 +66,7 @@ type DNSRecord struct {
 var GroupName = os.Getenv("GROUP_NAME")
 
 func runWebhookServer(groupName string, hooks ...webhook.Solver) {
-	stopCh, exit := cmdutil.SetupExitHandler(cmdutil.GracefulShutdown)
+	stopCh, exit := utils.SetupExitHandler(utils.GracefulShutdown)
 	defer exit() // This function might call os.Exit, so defer last
 
 	logs.InitLogs()
@@ -85,7 +85,7 @@ func runWebhookServer(groupName string, hooks ...webhook.Solver) {
 
 	if err := cmd.Execute(); err != nil {
 		logf.Log.Error(err, "error executing command")
-		cmdutil.SetExitCode(err)
+		utils.SetExitCode(err)
 	}
 }
 
@@ -468,13 +468,13 @@ func (c *godaddyDNSProviderSolver) getAPIKey(cfg godaddyDNSProviderConfig, names
 
 		keyBytes, ok := sec.Data[cfg.APIKeySecretRef.Key]
 		if !ok {
-			klog.V(4).Info("key %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Key, secretName, namespace)
+			klog.V(4).Infof("key %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Key, secretName, namespace)
 			return nil, nil, fmt.Errorf("key %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Key, secretName, namespace)
 		}
 
 		secretBytes, ok := sec.Data[cfg.APIKeySecretRef.Secret]
 		if !ok {
-			klog.V(4).Info("secret %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Secret, secretName, namespace)
+			klog.V(4).Infof("secret %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Secret, secretName, namespace)
 			return nil, nil, fmt.Errorf("secret %s not found in secret \"%s/%s\"", cfg.APIKeySecretRef.Secret, secretName, namespace)
 		}
 

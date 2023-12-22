@@ -4,7 +4,7 @@
 helm install godaddy-webhook \
     --set groupName=aldunelabs.com \
     --set image.repository=devregistry.aldunelabs.com/cert-manager-godaddy \
-    --set image.tag=v1.27.2 \
+    --set image.tag=v1.28.4 \
     --set image.pullPolicy=Always \
     --namespace cert-manager ./deploy/godaddy-webhook $@
 

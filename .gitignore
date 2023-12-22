@@ -20,3 +20,4 @@ release/
 out/
 __main__
 _test
+cert-manager-webhook-godaddy

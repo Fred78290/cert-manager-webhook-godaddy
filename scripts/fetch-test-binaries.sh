@@ -2,15 +2,9 @@
 
 set -e
 
-k8s_version=1.19.2
+k8s_version=1.28.3
 goarch=$(go env GOARCH)
-goos="unknown"
-
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-  goos="linux"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  goos="darwin"
-fi
+goos=$(go env GOOS)
 
 if [[ "$goos" == "unknown" ]]; then
   echo "OS '$OSTYPE' not supported. Aborting." >&2

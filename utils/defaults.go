@@ -1,7 +1,5 @@
-//go:build !windows
-
 /*
-Copyright 2020 The cert-manager Authors.
+Copyright 2021 The cert-manager Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,11 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package utils
 
 import (
-	"os"
-	"syscall"
+	"time"
 )
 
-var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
+const (
+	DefaultLeaderElect                 = true
+	DefaultLeaderElectionNamespace     = "kube-system"
+	DefaultLeaderElectionLeaseDuration = 60 * time.Second
+	DefaultLeaderElectionRenewDeadline = 40 * time.Second
+	DefaultLeaderElectionRetryPeriod   = 15 * time.Second
+
+	DefaultEnableProfiling = false
+	DefaultProfilerAddr    = "localhost:6060"
+)

@@ -7,7 +7,7 @@ GOOS=$(go env GOOS)
 GOARCH=$(go env GOARCH)
 GODADDY_API_KEY_BASE64=$(echo -n "$GODADDY_API_KEY" | base64)
 GODADDY_API_SECRET_BASE64=$(echo -n "$GODADDY_API_SECRET" | base64)
-KUBE_VERSION=1.27.1
+KUBE_VERSION=1.28.3
 
 pushd $CURDIR/../
 
@@ -16,6 +16,7 @@ export TEST_ASSET_KUBE_APISERVER=_test/kubebuilder/bin/kube-apiserver
 export TEST_ASSET_KUBECTL=_test/kubebuilder/bin/kubectl
 export TEST_MANIFEST_PATH=_test/kubebuilder/godaddy
 export TEST_ZONE_NAME=aldunelabs.com
+export TEST_DNS_SERVER=97.74.101.22:53
 
 mkdir -p $TEST_MANIFEST_PATH
 
@@ -37,8 +38,8 @@ metadata:
   namespace: basic-present-record
 type: Opaque
 data:
-  key: "$GODADDY_API_KEY_BASE64"
-  secret: "$GODADDY_API_SECRET_BASE64"
+  key: $GODADDY_API_KEY_BASE64
+  secret: $GODADDY_API_SECRET_BASE64
 EOF
 
 cat > $TEST_MANIFEST_PATH/config.json <<EOF
@@ -51,8 +52,6 @@ cat > $TEST_MANIFEST_PATH/config.json <<EOF
   "ttl": 600
 }
 EOF
-
-exit
 
 TEST_ZONE_NAME="${TEST_ZONE_NAME}." TEST_MANIFEST_PATH=$TEST_MANIFEST_PATH go test .
 

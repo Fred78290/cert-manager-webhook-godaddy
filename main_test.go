@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Fred78290/cert-manager-webhook-godaddy/test/acme/dns"
+	dns "github.com/cert-manager/cert-manager/test/acme"
 )
 
 func TestRunsSuite(t *testing.T) {
@@ -17,8 +17,8 @@ func TestRunsSuite(t *testing.T) {
 		zone = "example.com"
 	}
 
-	if zone, found = os.LookupEnv("TEST_DNS_SERVER"); found == false {
-		dnsServer = "8.8.8.8:53"
+	if dnsServer, found = os.LookupEnv("TEST_DNS_SERVER"); found == false {
+		dnsServer = "97.74.101.22:53"
 	}
 
 	if manifest, found = os.LookupEnv("TEST_MANIFEST_PATH"); found == false {

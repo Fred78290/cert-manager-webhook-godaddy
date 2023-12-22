@@ -14,19 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package utils
 
 import (
-	"time"
+	"context"
+	"errors"
 )
 
-const (
-	DefaultLeaderElect                 = true
-	DefaultLeaderElectionNamespace     = "kube-system"
-	DefaultLeaderElectionLeaseDuration = 60 * time.Second
-	DefaultLeaderElectionRenewDeadline = 40 * time.Second
-	DefaultLeaderElectionRetryPeriod   = 15 * time.Second
-
-	DefaultEnableProfiling = false
-	DefaultProfilerAddr    = "localhost:6060"
-)
+// SetExitCode sets the exit code to 1 if the error is not a context.Canceled error.
+func SetExitCode(err error) {
+	if (err != nil) && !errors.Is(err, context.Canceled) {
+		errorExitCodeChannel <- 1 // Indicate that there was an error
+	}
+}
