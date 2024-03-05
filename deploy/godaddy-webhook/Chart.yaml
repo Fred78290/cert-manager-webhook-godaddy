@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: "1.28.4"
+appVersion: "1.29.0"
 description: A Helm chart to install godaddy cert manager webhook
 name: godaddy-webhook
 version: 1.29.0
