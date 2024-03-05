@@ -3,9 +3,9 @@ entries:
   godaddy-webhook:
   - apiVersion: v2
     appVersion: 1.29.0
-    created: "2024-03-05T14:45:55.155668627Z"
+    created: "2024-03-05T14:46:23.878662724Z"
     description: A Helm chart to install godaddy cert manager webhook
-    digest: 7c4fc9eea07a64797448965626a88b390f6ceb68511dad7cd39c11a292480b8e
+    digest: 9e96da3f45c00ca0fbc7270848c535c7e48d928024b8930bb43c697b7eb07014
     home: https://github.com/Fred78290/cert-manager-webhook-godaddy/
     icon: https://raw.githubusercontent.com/Fred78290/cert-manager-webhook-godaddy/master/images/cert-manager-godaddy.png
     keywords:
@@ -152,4 +152,4 @@ entries:
     urls:
     - https://Fred78290.github.io/cert-manager-webhook-godaddy/godaddy-webhook-1.24.6.tgz
     version: 1.24.6
-generated: "2024-03-05T14:45:55.155072174Z"
+generated: "2024-03-05T14:46:23.878171236Z"
