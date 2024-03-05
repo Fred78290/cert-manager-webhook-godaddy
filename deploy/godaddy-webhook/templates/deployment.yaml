@@ -32,6 +32,9 @@ spec:
           env:
             - name: GROUP_NAME
               value: {{ .Values.groupName }}
+          {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: https
               containerPort: 443
