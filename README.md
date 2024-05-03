@@ -14,6 +14,29 @@
 </a>
 </p>
 
+# Time to leave GoDaddy...
+
+**QUESTION: GoDaddy ACCESS DENIED via API-Call**
+```
+Hi,
+
+We have recently updated the account requirements to access parts of our production Domains API. As part of this update, access to these APIs are now limited:
+
+    Availability API: Limited to accounts with 50 or more domains
+    Management and DNS APIs: Limited to accounts with 10 or more domains and/or an active Discount Domain Club plan.
+
+If you have lost access to these APIs, but feel you meet these requirements, please reply back with your account number and we will review your account and whitelist you if we have denied you access in error.
+
+Please note that this does not affect your access to any of our OTE APIs.
+
+If you have any further questions or need assistance with other API questions, please reach out.
+
+Regards,
+
+API Support Team
+```
+
+
 # cert-manager webhook for GoDaddy
 
 ## Installation
